@@ -31,9 +31,11 @@ async function fetchPokemon(pokemon){
     
 }
 
-async function renderPokemon(pokemon){
-    pokemonName.forEach((name)=>{name.innerHTML = 'Loading...'});
-    pokemonNumber.innerHTML = ''
+async function renderPokemon(pokemon, is_search=false){
+    if(is_search){
+        pokemonName.forEach((name)=>{name.innerHTML = 'Loading...'});
+        pokemonNumber.innerHTML = ''
+    }
 
     const data = await fetchPokemon(pokemon);
 
@@ -87,7 +89,7 @@ async function renderPokemon(pokemon){
 
 form.addEventListener('submit', (event)=>{
     event.preventDefault()
-    renderPokemon(input.value.toLowerCase())
+    renderPokemon(input.value.toLowerCase(), true)
 })
 
 buttonPrev.addEventListener('click', ()=>{
