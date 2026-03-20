@@ -414,19 +414,27 @@ menu.querySelector(".menu-container").addEventListener('scroll', ()=>{
         const scrollLeft = menu.querySelector(".menu-container").scrollLeft
         const clientWidth = menu.querySelector(".menu-screen").clientWidth
         const scrollWidth = menu.querySelector(".menu-container").scrollWidth
-            
+        
+        /* --------------------------------------------------- */
+        /* Deixa o pokemon pequeno se estiver na terceira tela */
+        /* --------------------------------------------------- */
         if(scrollLeft < clientWidth *2) {
             pokemonImage.classList.remove("small")
         }else{
             pokemonImage.classList.add("small")
         }
-
+        
+        /* -------------------------------------------------------- */
+        /* Esconde o indicador de scroll na primeira página do menu */
+        /* -------------------------------------------------------- */
         if(scrollLeft<=20){
             leftIndicator.classList.add("hide")
         }else{
             leftIndicator.classList.remove("hide")
         }
-
+        /* ------------------------------------------------------ */
+        /* Esconde o indicador de scroll na última página do menu */
+        /* ------------------------------------------------------ */
         if(scrollWidth - scrollLeft <= clientWidth){
             rightIndicator.classList.add("hide")
         }else{
