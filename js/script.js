@@ -33,9 +33,12 @@ const buttonNext = document.querySelector(".btn-next")
 const buttonConfirm = document.querySelector(".btn-confirm")
 const buttonUp = document.querySelector(".btn-up")
 const buttonDown = document.querySelector(".btn-down")
+const buttonSound = document.querySelector(".btn-sound")
 
 var pokemonSoundTimeout;
 let searchPokemon = 1;
+
+var soundStatus = localStorage.getItem("sound_status") ?? true
 
 
 /* -------------------------------------------------------- */
@@ -193,16 +196,19 @@ async function renderPokemon(pokemon, is_search=false){
     /* ---------------------- */
     /* Som do Pokémon em loop */
     /* ---------------------- */
-    pokemonSound.src = data.cries.legacy
-    pokemonSound.addEventListener('loadedmetadata', ()=>{
-        pokemonSound.play()
-        if(pokemonSoundTimeout){
-            clearInterval(pokemonSoundTimeout)
-        }
-        pokemonSoundTimeout = setInterval(async()=>{
+    
+    if(soundStatus===true){
+        pokemonSound.src = data.cries.legacy
+        pokemonSound.addEventListener('loadedmetadata', ()=>{
             pokemonSound.play()
-        }, pokemonSound.duration*1000+8000)
-    })
+            if(pokemonSoundTimeout){
+                clearInterval(pokemonSoundTimeout)
+            }
+            pokemonSoundTimeout = setInterval(async()=>{
+                pokemonSound.play()
+            }, pokemonSound.duration*1000+8000)
+        })
+    }
     
 
     /* ------------------------------- */
@@ -345,6 +351,27 @@ function handleConfirmClick(){
     }
 }
 
+function getSoundStatus(){
+    const status = JSON.parse(localStorage.getItem("sound_status"))
+    soundStatus = status ?? true
+    
+    localStorage.setItem("sound_status", soundStatus)
+    handleSoundStatusChange(soundStatus)
+}
+
+function handleSoundStatusChange(newStatus = null){
+
+    soundStatus = (newStatus!=null && typeof newStatus == "boolean") ? newStatus : !soundStatus
+    console.log(soundStatus)
+    localStorage.setItem("sound_status", soundStatus)
+
+    if(!soundStatus && pokemonSoundTimeout){
+        clearInterval(pokemonSoundTimeout)
+    }
+
+    buttonSound.querySelector("span").textContent = soundStatus ? "volume_up" : "volume_off"
+}
+
 
 /* ---------------------------------------- */
 /* Event Listeners dos botões e formulários */
@@ -359,8 +386,10 @@ buttonNext.addEventListener('click', handleNextClick)
 buttonUp.addEventListener('click', handleUpClick)
 buttonDown.addEventListener('click', handleDownClick)
 buttonConfirm.addEventListener('click', handleConfirmClick)
+buttonSound.addEventListener('click', handleSoundStatusChange)
 
 window.addEventListener("keydown", (event)=>{
+    if(!["enter", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(event.key.toLowerCase())) return;
     event.preventDefault()
     switch(event.key.toLowerCase()){
         case "enter":
@@ -413,4 +442,5 @@ menu.querySelector(".menu-container").addEventListener('scroll', ()=>{
 /* ---------------- */
 /* Processo inicial */
 /* ---------------- */
+getSoundStatus()
 renderPokemon(searchPokemon)

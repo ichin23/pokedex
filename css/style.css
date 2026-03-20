@@ -120,6 +120,22 @@ main{
     font-size: 0.9rem;
 }
 
+.btn-sound{
+    position: absolute;
+    width: 50px;
+    height: 50px;
+    padding: 5px;
+    top: 10%;
+    right: 25%;
+    background-color: #bb0d3c;
+    box-shadow: -2px 3px 0 #700723;
+}
+
+.btn-sound:active{
+
+    box-shadow: inset -4px 4px 0 #700723;
+}
+
 .hide{
     opacity: 0;
 }
