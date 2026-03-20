@@ -84,12 +84,13 @@ async function renderPokemon(pokemon, is_search=false){
     /* ---------------------------------- */
     /* Configuraçõe iniciais para a busca */
     /* ---------------------------------- */
-    if(is_search){
+    var showLoadingTimeout = setTimeout(()=>{
         pokemonName.forEach((name)=>{name.innerHTML = 'Loading...'});
         pokemonNumber.innerHTML = ''
-    }
+    }, 100)
 
     const [data, species] = await Promise.all([ fetchPokemon(pokemon), fetchSpecie(pokemon) ])
+    clearTimeout(showLoadingTimeout)
 
     menu.classList.remove("open")
     
@@ -129,7 +130,7 @@ async function renderPokemon(pokemon, is_search=false){
             const imageType = document.createElement("img")
 
             imageType.classList.add("pokemon_type")
-            imageType.src=type['sprites']['generation-v']['black-white']["name_icon"] ?? type['sprites']['generation-vi']['x-y']["name_icon"]
+            imageType.src= type['sprites']['generation-vi']['x-y']["name_icon"]
 
             pokemonTypes.appendChild(imageType)
             
@@ -144,7 +145,7 @@ async function renderPokemon(pokemon, is_search=false){
                 if(!damages[item]){
                     damages[item] = []
                 }
-                console.log(damageRelation[item])
+
                 await damageRelation[item].forEach(async(dmType)=>{
                     const imageTypeDan = document.createElement("img")
 
@@ -341,11 +342,9 @@ function handleConfirmClick(){
     pokemonImage.classList.remove("small")
 
     if(menu.classList.contains("open")){
-        console.log("open")
         leftIndicator.classList.add("hide")
         rightIndicator.classList.remove("hide")
     }else{
-        console.log("not open")
         leftIndicator.classList.remove("hide")
         rightIndicator.classList.remove("hide")
     }
@@ -360,9 +359,7 @@ function getSoundStatus(){
 }
 
 function handleSoundStatusChange(newStatus = null){
-
     soundStatus = (newStatus!=null && typeof newStatus == "boolean") ? newStatus : !soundStatus
-    console.log(soundStatus)
     localStorage.setItem("sound_status", soundStatus)
 
     if(!soundStatus && pokemonSoundTimeout){
