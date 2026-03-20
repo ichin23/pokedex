@@ -129,6 +129,7 @@ main{
     right: 25%;
     background-color: #bb0d3c;
     box-shadow: -2px 3px 0 #700723;
+    border: 2px solid #3a0413;
 }
 
 .btn-sound:active{

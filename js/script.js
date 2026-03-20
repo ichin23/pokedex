@@ -389,7 +389,7 @@ buttonConfirm.addEventListener('click', handleConfirmClick)
 buttonSound.addEventListener('click', handleSoundStatusChange)
 
 window.addEventListener("keydown", (event)=>{
-    if(!["enter", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(event.key.toLowerCase())) return;
+    if(!["enter", "arrowup", "arrowdown", "arrowleft", "arrowright"].includes(event.key.toLowerCase()) || input === document.activeElement) return;
     event.preventDefault()
     switch(event.key.toLowerCase()){
         case "enter":
