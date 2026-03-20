@@ -1,3 +1,6 @@
+/* -------------------------------- */
+/* Variáveis de exibição do pokémon */
+/* -------------------------------- */
 const pokemonName = document.querySelectorAll('.pokemon_name')
 const pokemonNumber = document.querySelector('.pokemon_number')
 const pokemonImage = document.querySelector(".pokemon_image")
@@ -8,11 +11,20 @@ const pokemonHp = document.querySelector(".pokemon_hp")
 const pokemonAttack = document.querySelector(".pokemon_attack")
 const pokemonDefense = document.querySelector(".pokemon_defense")
 const pokemonTypes = document.querySelector(".pokemon_types")
+const pokemonSound = document.querySelector(".pokemon_sound")
+
+
+/* --------------------- */
+/* Indicadores de scroll */
+/* --------------------- */
 const rightIndicator = document.querySelector(".right-indicator")
 const leftIndicator = document.querySelector(".left-indicator")
 
-const menu = document.querySelector(".menu")
 
+/* ------------- */
+/* Controladores */
+/* ------------- */
+const menu = document.querySelector(".menu")
 const form = document.querySelector(".form")
 const input = document.querySelector(".input_search")
 
@@ -22,18 +34,21 @@ const buttonConfirm = document.querySelector(".btn-confirm")
 const buttonUp = document.querySelector(".btn-up")
 const buttonDown = document.querySelector(".btn-down")
 
+var pokemonSoundTimeout;
 let searchPokemon = 1;
 
-async function fetchImageType(typeId){
-    /*const url = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-v/black-white/${typeId}.png`
-    const res = fetch(url)
 
-    if(res.status===200){
-        return url
-    }*/
+/* -------------------------------------------------------- */
+/* Pegar imagem do Type sem precisar consultar a API sempre */
+/* -------------------------------------------------------- */
+async function fetchImageType(typeId){
     return `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/types/generation-vi/x-y/${typeId}.png`
 }
 
+
+/* ----------------------------- */
+/* Buscar informações do Pokémon */
+/* ----------------------------- */
 async function fetchPokemon(pokemon){
     const apiResponse = await fetch(`https://pokeapi.co/api/v2/pokemon/${pokemon}`)
 
@@ -44,6 +59,9 @@ async function fetchPokemon(pokemon){
     }
 }
 
+/* ----------------------------- */
+/* Buscar informações da espécie */
+/* ----------------------------- */
 async function fetchSpecie(pokemon){
     const apiResponse = await fetch(`https://pokeapi.co/api/v2/pokemon-species/${pokemon}`)
 
@@ -54,7 +72,15 @@ async function fetchSpecie(pokemon){
     }
 }
 
+
+/* ---------------------- */
+/* Renderizando o Pokémon */
+/* ---------------------- */
 async function renderPokemon(pokemon, is_search=false){
+    
+    /* ---------------------------------- */
+    /* Configuraçõe iniciais para a busca */
+    /* ---------------------------------- */
     if(is_search){
         pokemonName.forEach((name)=>{name.innerHTML = 'Loading...'});
         pokemonNumber.innerHTML = ''
@@ -73,9 +99,12 @@ async function renderPokemon(pokemon, is_search=false){
         return;
     }
 
-    pokemonDescription.textContent = species["flavor_text_entries"].filter((desc)=>{return desc.language.name=='en'})[0].flavor_text
-
     
+    
+    
+    /* ------------------------------------------------------------------------------------ */
+    /* Busca dos Tipos do Pokémon Selecionado e das relações de batalha com outros pokémons */
+    /* ------------------------------------------------------------------------------------ */
     Promise.all(
         data.types.map((type)=> fetch(type.type.url))
     ).then(async (types)=>{
@@ -83,15 +112,31 @@ async function renderPokemon(pokemon, is_search=false){
         pokemonTypes.replaceChildren()
         const menuBattlesScreen = menu.querySelector(".battles-screen")
 
+        /* ----------------------------- */
+        /* Configura os tipos do pokémon */
+        /* ----------------------------- */
+        pokemonTypes.replaceChildren()
         for(const res of types){
+
+            /* ------------------------------------------- */
+            /* Configura imagem do Type na tela do pokémon */
+            /* ------------------------------------------- */
+            
             const type = await res.json();
             const imageType = document.createElement("img")
 
             imageType.classList.add("pokemon_type")
             imageType.src=type['sprites']['generation-v']['black-white']["name_icon"] ?? type['sprites']['generation-vi']['x-y']["name_icon"]
 
+            pokemonTypes.appendChild(imageType)
+            
+            
+            /* --------------------------------------------- */
+            /* Mapeia os relacionamentos de tipos na batalha */
+            /* --------------------------------------------- */
+            
             const damageRelation = type["damage_relations"]
-
+            
             for(let item in damageRelation){
                 if(!damages[item]){
                     damages[item] = []
@@ -106,9 +151,21 @@ async function renderPokemon(pokemon, is_search=false){
                 })
             }
 
-            pokemonTypes.appendChild(imageType)
         }
+        
+        /* ------------------------- */
+        /* Configura Tela de Batalha */
+        /* ------------------------- */
         menuBattlesScreen.replaceChildren()
+        
+        const xpTitle = document.createElement("h4")
+        xpTitle.textContent = "Experience for defeating:"
+        xpTitle.classList.add("title-menu")
+        menuBattlesScreen.appendChild(xpTitle)
+        const xp = document.createElement("p")
+        xp.textContent = data.base_experience+" XP"
+        menuBattlesScreen.appendChild(xp)
+
         for(var key in damages){
             const title = document.createElement("h4")
             title.classList.add("title-menu")
@@ -133,15 +190,29 @@ async function renderPokemon(pokemon, is_search=false){
     })
 
     
-
-    const menuAbilitiesScreen = menu.querySelector(".abilities-screen")
-    menuAbilitiesScreen.scrollTo({
-        top: 0
+    /* ---------------------- */
+    /* Som do Pokémon em loop */
+    /* ---------------------- */
+    pokemonSound.src = data.cries.legacy
+    pokemonSound.addEventListener('loadedmetadata', ()=>{
+        pokemonSound.play()
+        if(pokemonSoundTimeout){
+            clearInterval(pokemonSoundTimeout)
+        }
+        pokemonSoundTimeout = setInterval(async()=>{
+            pokemonSound.play()
+        }, pokemonSound.duration*1000+8000)
     })
+    
+
+    /* ------------------------------- */
+    /* Busca de Habilidades do Pokémon */
+    /* ------------------------------- */
+    const menuAbilitiesScreen = menu.querySelector(".abilities-screen")
 
     Promise.all(
         data.abilities.map((ability)=> ability.ability.url).map((url)=>fetch(url))
-    ).then((types)=>{
+    ).then((abilities)=>{
 
         menuAbilitiesScreen.replaceChildren()
         const title = document.createElement("h4")
@@ -151,13 +222,11 @@ async function renderPokemon(pokemon, is_search=false){
         menuAbilitiesScreen.appendChild(title)
 
         
-        types.forEach(async(res)=>{
+        abilities.forEach(async(res)=>{
             const ability = await res.json();
 
             const name = ability.names.filter((name)=>{return name.language.name==="en"})[0].name;
             const desc = ability.flavor_text_entries.filter((flavor)=>{return flavor.language.name==="en"})[0].flavor_text;
-
-            console.log(desc)
 
             const nameComp = document.createElement("p")
             nameComp.textContent=name
@@ -170,6 +239,10 @@ async function renderPokemon(pokemon, is_search=false){
         })
     })
 
+
+    /* ------------------------------------------ */
+    /* Configurando informações gerais do Pokémon */
+    /* ------------------------------------------ */
     searchPokemon = data.id
     
     pokemonImage.style.display='block'
@@ -184,15 +257,133 @@ async function renderPokemon(pokemon, is_search=false){
     pokemonAttack.innerHTML = data.stats.filter((stat)=>stat.stat.name==="attack")[0].base_stat
     pokemonDefense.innerHTML = data.stats.filter((stat)=>stat.stat.name==="defense")[0].base_stat
 
+    pokemonDescription.innerHTML = species["flavor_text_entries"].filter((desc)=>{return desc.language.name=='en'})[0].flavor_text
+
     input.value=''
 }
 
+/* ---------------------------------- */
+/* Funções de gerenciamento do estado */
+/* ---------------------------------- */
+function resetScrolls(){
+    menu.querySelector(".menu-container").scrollTo({left: 0})
+
+    const screens = menu.querySelectorAll(".menu-screen")
+    screens.forEach((screen)=>{
+        screen.scrollTo({top:0})
+    })
+}
+
+function handlePrevClick(){
+    if(menu.classList.contains("open")){
+        menu.querySelector(".menu-container").scrollBy({
+            left: -100,
+            behavior: "smooth",
+        });
+
+        const screens = menu.querySelectorAll(".menu-screen")
+        screens.forEach((screen)=>{ screen.scrollTo({top: 0}) })
+        return
+    }
+
+    if(searchPokemon <= 1) return;
+
+    searchPokemon--
+    renderPokemon(searchPokemon)
+}
+
+function handleNextClick(){
+    if(menu.classList.contains("open")){
+        menu.querySelector(".menu-container").scrollBy({
+            left: 100,
+            behavior: "smooth",
+        });
+
+        const screens = menu.querySelectorAll(".menu-screen")
+        screens.forEach((screen)=>{ screen.scrollTo({top:0}) })
+        return
+    }
+    searchPokemon+=1
+    renderPokemon(searchPokemon)
+}
+
+function handleUpClick(){
+    const screens = menu.querySelectorAll(".menu-screen")
+    screens.forEach((screen)=>{
+        screen.scrollBy({
+            top: -50,
+            behavior: 'smooth'
+        })
+    })
+}
+
+function handleDownClick(){
+    const screens = menu.querySelectorAll(".menu-screen")
+    screens.forEach((screen)=>{
+        screen.scrollBy({
+            top: 50,
+            behavior: 'smooth'
+        })
+    })
+}
+
+function handleConfirmClick(){
+    if(searchPokemon==null) return
+
+    menu.classList.toggle("open")
+    resetScrolls()
+    pokemonImage.classList.remove("small")
+
+    if(menu.classList.contains("open")){
+        console.log("open")
+        leftIndicator.classList.add("hide")
+        rightIndicator.classList.remove("hide")
+    }else{
+        console.log("not open")
+        leftIndicator.classList.remove("hide")
+        rightIndicator.classList.remove("hide")
+    }
+}
+
+
+/* ---------------------------------------- */
+/* Event Listeners dos botões e formulários */
+/* ---------------------------------------- */ 
 form.addEventListener('submit', (event)=>{
     event.preventDefault()
     renderPokemon(input.value.toLowerCase(), true)
 })
 
+buttonPrev.addEventListener('click', handlePrevClick)
+buttonNext.addEventListener('click', handleNextClick)
+buttonUp.addEventListener('click', handleUpClick)
+buttonDown.addEventListener('click', handleDownClick)
+buttonConfirm.addEventListener('click', handleConfirmClick)
+
+window.addEventListener("keydown", (event)=>{
+    event.preventDefault()
+    switch(event.key.toLowerCase()){
+        case "enter":
+            handleConfirmClick();
+            break;
+        case "arrowup":
+            handleUpClick()
+            break;
+        case "arrowdown":
+            handleDownClick()
+            break;
+        case "arrowleft":
+            handlePrevClick()
+            break;
+        case "arrowright":
+            handleNextClick()
+            break;
+    }
+})
+
 menu.querySelector(".menu-container").addEventListener('scroll', ()=>{
+    if(!menu.classList.contains("open")) return;
+
     setTimeout(() => {
         const scrollLeft = menu.querySelector(".menu-container").scrollLeft
         const clientWidth = menu.querySelector(".menu-screen").clientWidth
@@ -219,83 +410,7 @@ menu.querySelector(".menu-container").addEventListener('scroll', ()=>{
     }, 50);
 })
 
-buttonPrev.addEventListener('click', ()=>{
-    if(menu.classList.contains("open")){
-        menu.querySelector(".menu-container").scrollBy({
-            left: -100,
-            behavior: "smooth",
-        });
-
-        const screens = menu.querySelectorAll(".menu-screen")
-        screens.forEach((screen)=>{
-            screen.scrollTo({top: 0})
-        })
-        
-        return
-    }
-
-    if(searchPokemon <= 1) return;
-
-    searchPokemon--
-    renderPokemon(searchPokemon)
-})
-
-buttonNext.addEventListener('click', ()=>{
-    if(menu.classList.contains("open")){
-        menu.querySelector(".menu-container").scrollBy({
-            left: 100,
-            behavior: "smooth",
-        });
-        
-        return
-    }
-    searchPokemon+=1
-    renderPokemon(searchPokemon)
-})
-
-buttonUp.addEventListener('click', ()=>{
-    const screens = menu.querySelectorAll(".menu-screen")
-    screens.forEach((screen)=>{
-        screen.scrollBy({
-            top: -50,
-            behavior: 'smooth'
-        })
-    })
-})
-
-buttonDown.addEventListener('click', ()=>{
-    const screens = menu.querySelectorAll(".menu-screen")
-    screens.forEach((screen)=>{
-        screen.scrollBy({
-            top: 50,
-            behavior: 'smooth'
-        })
-    })
-})
-
-buttonConfirm.addEventListener('click', ()=>{
-    if(searchPokemon!=null){
-        menu.classList.toggle("open")
-        resetScrolls()
-
-        if(menu.classList.contains("open")){
-            leftIndicator.classList.add("hide")
-            rightIndicator.classList.remove("hide")
-        }else{
-            leftIndicator.classList.remove("hide")
-            rightIndicator.classList.remove("hide")
-        }
-    }
-})
-
-function resetScrolls(){
-
-    menu.querySelector(".menu-container").scrollTo({left: 0})
-
-    const screens = menu.querySelectorAll(".menu-screen")
-    screens.forEach((screen)=>{
-        screen.scrollTo({top:0})
-    })
-}
-
+/* ---------------- */
+/* Processo inicial */
+/* ---------------- */
 renderPokemon(searchPokemon)
